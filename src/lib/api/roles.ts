@@ -15,7 +15,7 @@ export const getRoles = async (
 ): Promise<PaginatedResponse<RoleResponse>> => {
   const response = await apiClient.get<PaginatedResponse<RoleResponse>>(
     '/api/roles',
-    { params }
+    params
   );
   return response;
 };

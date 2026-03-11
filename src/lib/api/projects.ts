@@ -20,7 +20,7 @@ export const getProjects = async (
 ): Promise<PaginatedResponse<ProjectListResponse>> => {
   const response = await apiClient.get<PaginatedResponse<ProjectListResponse>>(
     '/api/projects',
-    { params }
+    params
   );
   return response;
 };

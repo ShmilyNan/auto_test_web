@@ -20,7 +20,7 @@ export const getUsers = async (
 ): Promise<PaginatedResponse<UserListResponse>> => {
   const response = await apiClient.get<PaginatedResponse<UserListResponse>>(
     '/api/users',
-    { params }
+    params
   );
   return response;
 };

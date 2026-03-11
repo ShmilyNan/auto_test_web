@@ -37,11 +37,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PermissionGuard } from "@/components/auth/permission-guard";
 import { TESTCASE } from "@/lib/constants/permissions";
 import TestCaseForm from "@/components/test-cases/test-case-form";
 import { HttpMethod } from "@/types/test-case";
 import { getTestCases, deleteTestCase } from "@/lib/api/test-cases";
+import { getProjects } from "@/lib/api/projects";
 import type { TestCaseListResponse } from "@/types/test-case";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
@@ -52,14 +60,38 @@ export default function TestCasesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTestCase, setSelectedTestCase] =
     useState<TestCaseListResponse | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState({
+    name: "",
+    projectId: "all",
+    status: "all",
+  });
+  const [appliedFilters, setAppliedFilters] = useState(filters);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // 获取测试用例列表
   const { data: testCasesData, isLoading } = useQuery({
-    queryKey: ["test-cases"],
-    queryFn: () => getTestCases(),
+    queryKey: ["test-cases", page, appliedFilters],
+    queryFn: () =>
+      getTestCases({
+        page,
+        page_size: 10,
+        name: appliedFilters.name || undefined,
+        project_id:
+          appliedFilters.projectId === "all"
+            ? undefined
+            : Number(appliedFilters.projectId),
+        is_active:
+          appliedFilters.status === "all"
+            ? undefined
+            : appliedFilters.status === "active",
+      }),
+  });
+
+  const { data: projectsData } = useQuery({
+    queryKey: ["projects", "filter-options"],
+    queryFn: () => getProjects({ page: 1, page_size: 1000 }),
   });
 
   const testCases = testCasesData?.items || [];
@@ -100,17 +132,28 @@ export default function TestCasesPage() {
     }
   };
 
-  const handleRunTest = (testCase: TestCaseListResponse) => {
+  const handleRunTest = () => {
     toast({
       title: "功能待实现",
       description: "测试运行功能待实现",
     });
   };
 
-  // 过滤测试用例
-  const filteredTestCases = testCases.filter((testCase) =>
-    testCase.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const handleSearch = () => {
+    setAppliedFilters(filters);
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    const defaultFilters = {
+      name: "",
+      projectId: "all",
+      status: "all",
+    };
+    setFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
+    setPage(1);
+  };
 
   const getMethodBadgeColor = (method: HttpMethod) => {
     switch (method) {
@@ -145,17 +188,58 @@ export default function TestCasesPage() {
         </PermissionGuard>
       </div>
 
-      {/* Search */}
+      {/* Query */}
       <Card>
         <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="搜索测试用例..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex flex-wrap gap-2">
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="搜索测试用例..."
+                value={filters.name}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="pl-9"
+              />
+            </div>
+            <Select
+              value={filters.projectId}
+              onValueChange={(value) =>
+                setFilters((prev) => ({ ...prev, projectId: value }))
+              }
+            >
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="所属项目" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部项目</SelectItem>
+                {projectsData?.items.map((project) => (
+                  <SelectItem key={project.id} value={String(project.id)}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={filters.status}
+              onValueChange={(value) =>
+                setFilters((prev) => ({ ...prev, status: value }))
+              }
+            >
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部状态</SelectItem>
+                <SelectItem value="active">启用</SelectItem>
+                <SelectItem value="inactive">禁用</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleSearch}>查询</Button>
+            <Button variant="outline" onClick={handleReset}>
+              重置
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -165,15 +249,17 @@ export default function TestCasesPage() {
         <CardHeader>
           <CardTitle>测试用例列表</CardTitle>
           <CardDescription>
-            共 {filteredTestCases.length} 个测试用例
+            共 {testCasesData?.total || 0} 个测试用例
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-12 text-gray-500">加载中...</div>
-          ) : filteredTestCases.length === 0 ? (
+          ) : testCases.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              {searchQuery
+              {appliedFilters.name ||
+              appliedFilters.status !== "all" ||
+              appliedFilters.projectId !== "all"
                 ? "未找到匹配的测试用例"
                 : "暂无测试用例，点击上方按钮创建"}
             </div>
@@ -191,7 +277,7 @@ export default function TestCasesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTestCases.map((testCase) => (
+                {testCases.map((testCase) => (
                   <TableRow key={testCase.id}>
                     <TableCell className="font-medium">{testCase.id}</TableCell>
                     <TableCell>{testCase.name}</TableCell>
@@ -220,7 +306,7 @@ export default function TestCasesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRunTest(testCase)}
+                          onClick={handleRunTest}
                         >
                           <Play className="h-4 w-4" />
                         </Button>
@@ -251,6 +337,35 @@ export default function TestCasesPage() {
           )}
         </CardContent>
       </Card>
+
+      {testCasesData && testCasesData.pages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            共 {testCasesData.total} 条记录，第 {testCasesData.page} /{" "}
+            {testCasesData.pages} 页
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              上一页
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setPage((p) => Math.min(testCasesData.pages, p + 1))
+              }
+              disabled={page === testCasesData.pages}
+            >
+              下一页
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

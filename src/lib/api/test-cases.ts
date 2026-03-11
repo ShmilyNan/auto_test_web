@@ -22,7 +22,7 @@ export const getTestCases = async (
 ): Promise<PaginatedResponse<TestCaseListResponse>> => {
   const response = await apiClient.get<PaginatedResponse<TestCaseListResponse>>(
     '/api/testcases',
-    { params }
+    params
   );
   return response;
 };

@@ -18,7 +18,7 @@ export const getReports = async (
 ): Promise<PaginatedResponse<ReportListResponse>> => {
   const response = await apiClient.get<PaginatedResponse<ReportListResponse>>(
     '/api/reports',
-    { params }
+    params
   );
   return response;
 };

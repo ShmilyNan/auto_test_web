@@ -16,6 +16,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -32,7 +39,11 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({
+    name: "",
+    status: "all",
+  });
+  const [appliedFilters, setAppliedFilters] = useState(filters);
   const [selectedProject, setSelectedProject] =
     useState<ProjectListResponse | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -41,12 +52,16 @@ export default function ProjectsPage() {
 
   // 获取项目列表
   const { data: projectsData, isLoading } = useQuery({
-    queryKey: ["projects", page, search],
+    queryKey: ["projects", page, appliedFilters],
     queryFn: () =>
       getProjects({
         page,
         page_size: 10,
-        name: search || undefined,
+        name: appliedFilters.name || undefined,
+        is_active:
+          appliedFilters.status === "all"
+            ? undefined
+            : appliedFilters.status === "active",
       }),
   });
 
@@ -70,8 +85,18 @@ export default function ProjectsPage() {
     },
   });
 
-  const handleSearch = (value: string) => {
-    setSearch(value);
+  const handleSearch = () => {
+    setAppliedFilters(filters);
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    const defaultFilters = {
+      name: "",
+      status: "all",
+    };
+    setFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
     setPage(1);
   };
 
@@ -104,16 +129,37 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="搜索项目名称..."
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
+            value={filters.name}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, name: e.target.value }))
+            }
             className="pl-10"
           />
         </div>
+        <Select
+          value={filters.status}
+          onValueChange={(value) =>
+            setFilters((prev) => ({ ...prev, status: value }))
+          }
+        >
+          <SelectTrigger className="w-full md:w-44">
+            <SelectValue placeholder="状态" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            <SelectItem value="active">活跃</SelectItem>
+            <SelectItem value="inactive">已归档</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button onClick={handleSearch}>查询</Button>
+        <Button variant="outline" onClick={handleReset}>
+          重置
+        </Button>
       </div>
 
       <div className="rounded-md border">
