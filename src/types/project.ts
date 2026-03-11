@@ -6,10 +6,7 @@
 export interface ProjectResponse {
   id: number;
   name: string;
-<<<<<<< HEAD
   code: string;
-=======
->>>>>>> 3091069845b1181b191b80d457249461996d3517
   description: string | null;
   base_url: string | null;
   is_active: boolean;
@@ -30,10 +27,7 @@ export interface ProjectListResponse {
 // 项目创建
 export interface ProjectCreate {
   name: string;
-<<<<<<< HEAD
   code: string;
-=======
->>>>>>> 3091069845b1181b191b80d457249461996d3517
   description?: string;
   base_url?: string;
 }
