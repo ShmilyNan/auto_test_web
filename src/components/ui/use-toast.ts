@@ -1,7 +1,11 @@
 import * as React from 'react';
 
 const TOAST_LIMIT = 1;
+<<<<<<< HEAD
 const TOAST_REMOVE_DELAY = 5000;
+=======
+const TOAST_REMOVE_DELAY = 1000000;
+>>>>>>> 3091069845b1181b191b80d457249461996d3517
 
 type ToasterToast = {
   id: string;
