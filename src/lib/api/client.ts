@@ -75,8 +75,11 @@ class ApiClient {
 
           // 401 未授权，跳转登录
           if (status === 401 && typeof window !== 'undefined') {
-            // 清除 token
+            // 清除认证相关缓存，避免登录页根据旧状态跳转回首页
             localStorage.removeItem('token');
+            localStorage.removeItem('user-storage');
+            localStorage.removeItem('user-permissions');
+            localStorage.removeItem('user-roles');
             // 跳转登录页
             window.location.href = '/login';
           }
