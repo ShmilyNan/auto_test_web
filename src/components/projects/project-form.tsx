@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,7 +62,7 @@ export default function ProjectForm({
   });
 
   // 初始化表单数据（编辑模式）
-  useState(() => {
+  useEffect(() => {
     if (projectData) {
       form.reset({
         name: projectData.name,
@@ -72,7 +72,7 @@ export default function ProjectForm({
         is_active: projectData.is_active,
       });
     }
-  });
+  }, [projectData, form]);
 
   // 创建项目
   const createMutation = useMutation({

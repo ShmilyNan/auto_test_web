@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getRoles, deleteRole } from '@/lib/api/roles';
-import type { RoleResponse } from '@/types/auth';
-import type { PaginatedResponse } from '@/types/common';
-import { useToast } from '@/components/ui/use-toast';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getRoles, deleteRole } from "@/lib/api/roles";
+import type { RoleResponse } from "@/types/auth";
+import type { PaginatedResponse } from "@/types/common";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Table,
   TableBody,
@@ -13,8 +13,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus } from 'lucide-react';
-import RoleForm from '@/components/roles/role-form';
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, Plus } from "lucide-react";
+import RoleForm from "@/components/roles/role-form";
 
 export default function RolesPage() {
   const { toast } = useToast();
@@ -38,8 +38,8 @@ export default function RolesPage() {
 
   // 获取角色列表
   const { data: rolesData, isLoading } = useQuery({
-    queryKey: ['roles'],
-    queryFn: () => getRoles,
+    queryKey: ["roles"],
+    queryFn: () => getRoles(),
   });
 
   const roles = rolesData?.items || [];
@@ -48,18 +48,18 @@ export default function RolesPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteRole,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
       setIsDeleteDialogOpen(false);
       toast({
-        title: '成功',
-        description: '角色已删除',
+        title: "成功",
+        description: "角色已删除",
       });
     },
     onError: (error: any) => {
       toast({
-        variant: 'destructive',
-        title: '删除失败',
-        description: error.response?.data?.detail || '删除角色失败',
+        variant: "destructive",
+        title: "删除失败",
+        description: error.response?.data?.detail || "删除角色失败",
       });
     },
   });
@@ -85,9 +85,7 @@ export default function RolesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">角色管理</h1>
-          <p className="text-muted-foreground mt-2">
-            管理系统角色和权限
-          </p>
+          <p className="text-muted-foreground mt-2">管理系统角色和权限</p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -125,12 +123,12 @@ export default function RolesPage() {
                 <TableRow key={role.id}>
                   <TableCell>{role.id}</TableCell>
                   <TableCell className="font-medium">{role.name}</TableCell>
-                  <TableCell>{role.description || '-'}</TableCell>
+                  <TableCell>{role.description || "-"}</TableCell>
                   <TableCell>
                     <Badge>{role.permissions.length}</Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(role.created_at).toLocaleDateString('zh-CN')}
+                    {new Date(role.created_at).toLocaleDateString("zh-CN")}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -163,7 +161,7 @@ export default function RolesPage() {
             <DialogTitle>新建角色</DialogTitle>
             <DialogDescription>创建新的系统角色</DialogDescription>
           </DialogHeader>
-          <div className='overflow-y-auto flex-1 -mr-4 pr-4'>
+          <div className="overflow-y-auto flex-1 -mr-4 pr-4">
             <RoleForm onSuccess={() => setIsCreateDialogOpen(false)} />
           </div>
         </DialogContent>
@@ -175,7 +173,7 @@ export default function RolesPage() {
             <DialogTitle>编辑角色</DialogTitle>
             <DialogDescription>修改角色信息和权限</DialogDescription>
           </DialogHeader>
-          <div className='overflow-y-auto flex-1 -mr-4 pr-4'>
+          <div className="overflow-y-auto flex-1 -mr-4 pr-4">
             {selectedRole && (
               <RoleForm
                 roleId={selectedRole.id}
@@ -206,7 +204,7 @@ export default function RolesPage() {
               onClick={handleDeleteConfirm}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? '删除中...' : '确认删除'}
+              {deleteMutation.isPending ? "删除中..." : "确认删除"}
             </Button>
           </DialogFooter>
         </DialogContent>
