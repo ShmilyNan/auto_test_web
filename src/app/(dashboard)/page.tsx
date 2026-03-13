@@ -1,60 +1,75 @@
-'use client';
+"use client";
 
-import { TestTube, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { TestTube, CheckCircle, XCircle, Clock } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { getDashboardData } from "@/lib/api/reports";
+import { exec } from "child_process";
+import { title } from "process";
 
-const statsData = [
-  {
-    title: '总用例数',
-    value: '1,234',
-    change: '+12%',
-    trend: 'up',
-    icon: TestTube,
-  },
-  {
-    title: '通过用例',
-    value: '1,089',
-    change: '+8%',
-    trend: 'up',
-    icon: CheckCircle,
-  },
-  {
-    title: '失败用例',
-    value: '145',
-    change: '-3%',
-    trend: 'down',
-    icon: XCircle,
-  },
-  {
-    title: '执行中',
-    value: '15',
-    change: '+2',
-    trend: 'up',
-    icon: Clock,
-  },
-];
-
-const executionTrendData = [
-  { name: '周一', 执行: 120, 通过: 110, 失败: 10 },
-  { name: '周二', 执行: 150, 通过: 135, 失败: 15 },
-  { name: '周三', 执行: 180, 通过: 165, 失败: 15 },
-  { name: '周四', 执行: 200, 通过: 185, 失败: 15 },
-  { name: '周五', 执行: 220, 通过: 200, 失败: 20 },
-  { name: '周六', 执行: 100, 通过: 95, 失败: 5 },
-  { name: '周日', 执行: 80, 通过: 78, 失败: 2 },
-];
-
-const passRateData = [
-  { name: '项目 A', value: 92 },
-  { name: '项目 B', value: 88 },
-  { name: '项目 C', value: 95 },
-  { name: '项目 D', value: 85 },
-];
-
-const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444'];
+const COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444"];
 
 export default function Dashboard() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard-data"],
+    queryFn: () => getDashboardData(),
+  });
+
+  const statsData = [
+    {
+      title: "总用例数",
+      value: data?.stats.total_cases ?? 0,
+      icon: TestTube,
+      change: data?.stats.total_change ?? "-",
+    },
+    {
+      title: "通过用例",
+      value: data?.stats.passed_cases ?? 0,
+      icon: CheckCircle,
+      change: data?.stats.passed_change ?? "-",
+    },
+    {
+      title: "失败用例",
+      value: data?.stats.failed_cases ?? 0,
+      icon: XCircle,
+      change: data?.stats.failed_change ?? "-",
+    },
+    {
+      title: "执行中",
+      value: data?.stats.running_cases ?? "-",
+      icon: Clock,
+      change: data?.stats.running_change ?? "-",
+    },
+  ];
+
+  const executionTrendData = (data?.execution_trend ?? []).map((item) => ({
+    name: item.date,
+    执行: item.executed,
+    通过: item.passed,
+    失败: item.failed,
+  }));
+
+  const passRateData = data?.pass_rate_by_project ?? [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -62,7 +77,6 @@ export default function Dashboard() {
         <p className="mt-1 text-sm text-gray-500">测试执行概览和数据分析</p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statsData.map((stat) => (
           <Card key={stat.title}>
@@ -73,26 +87,18 @@ export default function Dashboard() {
               <stat.icon className="h-4 w-4 text-gray-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center gap-1 text-xs">
-                {stat.trend === 'up' ? (
-                  <TrendingUp className="h-3 w-3 text-green-600" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 text-green-600" />
-                )}
-                <span className={stat.trend === 'up' ? 'text-green-600' : 'text-green-600'}>
-                  {stat.change}
-                </span>
-                <span className="text-gray-500">较上周</span>
+              <div className="text-2xl font-bold">
+                {isLoading ? "-" : stat.value}
+              </div>
+              <div className="text-xs text-gray-500">
+                较上周 {isLoading ? "-" : stat.change}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Charts */}
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Execution Trend */}
         <Card>
           <CardHeader>
             <CardTitle>执行趋势</CardTitle>
@@ -106,15 +112,29 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="执行" stroke="#3b82f6" strokeWidth={2} />
-                <Line type="monotone" dataKey="通过" stroke="#22c55e" strokeWidth={2} />
-                <Line type="monotone" dataKey="失败" stroke="#ef4444" strokeWidth={2} />
+                <Line
+                  type="monotone"
+                  dataKey="执行"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="通过"
+                  stroke="#22c55e"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="失败"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Pass Rate by Project */}
         <Card>
           <CardHeader>
             <CardTitle>项目通过率</CardTitle>
@@ -128,13 +148,18 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+                  }
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
                   {passRateData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${entry.name}-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -144,7 +169,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Recent Executions */}
       <Card>
         <CardHeader>
           <CardTitle>最近执行</CardTitle>
@@ -152,39 +176,36 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center justify-between border-b pb-3 last:border-0">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                      i % 3 === 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
-                    }`}
-                  >
-                    {i % 3 === 0 ? (
-                      <XCircle className="h-4 w-4" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="font-medium">测试执行 #{1000 + i}</div>
-                    <div className="text-sm text-gray-500">项目 A - {50 - i * 5} 个用例</div>
+            {(data?.recent_executions ?? []).map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between border-b pb-3 last:border-0"
+              >
+                <div>
+                  <div className="font-medium">{item.title}</div>
+                  <div className="text-sm text-gray-500">
+                    {item.project_name} - {item.case_count} 个用例
                   </div>
                 </div>
                 <div className="text-right">
                   <div
-                    className={`text-sm font-medium ${
-                      i % 3 === 0 ? 'text-red-600' : 'text-green-600'
-                    }`}
+                    className={`text-sm font-medium ${item.status === "failed" ? "text-red-600" : item.status === "running" ? "text-yellow-600" : "text-green-600"}`}
                   >
-                    {i % 3 === 0 ? '失败' : '通过'}
+                    {item.status === "failed"
+                      ? "失败"
+                      : item.status === "running"
+                        ? "执行中"
+                        : "通过"}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {i === 1 ? '5 分钟前' : `${i * 10} 分钟前`}
+                    {new Date(item.created_at).toLocaleString()}
                   </div>
                 </div>
               </div>
             ))}
+            {!isLoading && (data?.recent_executions?.length ?? 0) === 0 && (
+              <div className="py-8 text-center text-gray-500">暂无执行记录</div>
+            )}
           </div>
         </CardContent>
       </Card>

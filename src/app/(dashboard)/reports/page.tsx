@@ -1,33 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  FileText,
-  Download,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useMemo, useState } from "react";
+import { CheckCircle, XCircle, Clock, FileText } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -35,62 +17,52 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-// Mock execution data
-const executionData = {
-  id: 'EXEC-20240307-001',
-  project: '用户服务 API',
-  startTime: '2024-03-07 10:30:00',
-  endTime: '2024-03-07 10:35:30',
-  duration: '5分30秒',
-  totalCases: 128,
-  passed: 115,
-  failed: 13,
-  passRate: 89.8,
-};
-
-const caseResults = [
-  { id: 1, name: '用户登录', method: 'POST', status: 'passed', duration: '234ms' },
-  { id: 2, name: '用户注册', method: 'POST', status: 'passed', duration: '456ms' },
-  { id: 3, name: '获取用户信息', method: 'GET', status: 'failed', duration: '123ms', error: '404 Not Found' },
-  { id: 4, name: '更新用户信息', method: 'PUT', status: 'passed', duration: '345ms' },
-  { id: 5, name: '删除用户', method: 'DELETE', status: 'passed', duration: '189ms' },
-];
-
-const trendData = [
-  { name: '执行1', 通过: 110, 失败: 10 },
-  { name: '执行2', 通过: 115, 失败: 13 },
-  { name: '执行3', 通过: 120, 失败: 8 },
-  { name: '执行4', 通过: 125, 失败: 3 },
-  { name: '执行5', 通过: 115, 失败: 13 },
-];
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
+import { getReport, getReports } from "@/lib/api/reports";
 
 export default function ReportsPage() {
-  const [selectedExecution, setSelectedExecution] = useState(executionData.id);
+  const [page, setPage] = useState(1);
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+
+  const { data: reportsData, isLoading } = useQuery({
+    queryKey: ["reports", page],
+    queryFn: () =>
+      getReports({
+        page,
+        page_size: 10,
+      }),
+  });
+
+  const { data: reportDetail, isFetching: isDetailLoading } = useQuery({
+    queryKey: ["report-detail", selectedReportId],
+    queryFn: () => getReport(selectedReportId as number),
+    enabled: selectedReportId !== null,
+  });
+
+  const summary = useMemo(() => {
+    const items = reportsData?.items ?? [];
+    const total = items.reduce((acc, cur) => acc + cur.total_test_cases, 0);
+    const passed = items.reduce((acc, cur) => acc + cur.passed, 0);
+    const failed = items.reduce((acc, cur) => acc + cur.failed, 0);
+    const passRate = total > 0 ? ((passed / total) * 100).toFixed(2) : "0.00";
+    return { total, passed, failed, passRate };
+  }, [reportsData]);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">测试报告</h1>
-          <p className="mt-1 text-sm text-gray-500">查看和分析测试执行结果</p>
-        </div>
-        <Button>
-          <Download className="mr-2 h-4 w-4" />
-          导出报告
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">测试报告</h1>
+        <p className="mt-1 text-sm text-gray-500">测试报告列表与详情查看</p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -98,7 +70,7 @@ export default function ReportsPage() {
             <FileText className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{executionData.totalCases}</div>
+            <div className="text-2xl font-bold">{summary.total}</div>
           </CardContent>
         </Card>
         <Card>
@@ -107,7 +79,9 @@ export default function ReportsPage() {
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{executionData.passed}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {summary.passed}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -116,7 +90,9 @@ export default function ReportsPage() {
             <XCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{executionData.failed}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {summary.failed}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -125,203 +101,201 @@ export default function ReportsPage() {
             <Clock className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{executionData.passRate}%</div>
+            <div className="text-2xl font-bold">{summary.passRate}%</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">概览</TabsTrigger>
-          <TabsTrigger value="details">用例详情</TabsTrigger>
-          <TabsTrigger value="history">历史记录</TabsTrigger>
-        </TabsList>
-
-        {/* Overview */}
-        <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>执行信息</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <div className="text-sm text-gray-500">执行 ID</div>
-                  <div className="font-medium">{executionData.id}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">项目</div>
-                  <div className="font-medium">{executionData.project}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">执行时长</div>
-                  <div className="font-medium">{executionData.duration}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">开始时间</div>
-                  <div className="font-medium">{executionData.startTime}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">结束时间</div>
-                  <div className="font-medium">{executionData.endTime}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>趋势分析</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="通过" fill="#22c55e" />
-                  <Bar dataKey="失败" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Details */}
-        <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>用例执行详情</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Select>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="选择执行" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="latest">最新执行</SelectItem>
-                      <SelectItem value="previous">上次执行</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input placeholder="搜索用例..." className="w-64" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>用例名称</TableHead>
-                    <TableHead>方法</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>耗时</TableHead>
-                    <TableHead>错误信息</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {caseResults.map((result) => (
-                    <TableRow key={result.id}>
-                      <TableCell>{result.id}</TableCell>
-                      <TableCell>{result.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{result.method}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={result.status === 'passed' ? 'default' : 'destructive'}
-                          className={
-                            result.status === 'passed'
-                              ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                              : ''
-                          }
-                        >
-                          {result.status === 'passed' ? (
-                            <>
-                              <CheckCircle className="mr-1 h-3 w-3" />
-                              通过
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="mr-1 h-3 w-3" />
-                              失败
-                            </>
-                          )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{result.duration}</TableCell>
-                      <TableCell className="text-red-600">{result.error || '-'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* History */}
-        <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>执行历史</CardTitle>
-              <CardDescription>查看历史执行记录</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between border-b pb-4">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                          i % 3 === 0
-                            ? 'bg-red-100 text-red-600'
-                            : 'bg-green-100 text-green-600'
-                        }`}
+      <Card>
+        <CardHeader>
+          <CardTitle>测试报告列表</CardTitle>
+          <CardDescription>共 {reportsData?.total ?? 0} 条报告</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="py-12 text-center text-gray-500">加载中...</div>
+          ) : (reportsData?.items.length ?? 0) === 0 ? (
+            <div className="py-12 text-center text-gray-500">暂无测试报告</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>项目</TableHead>
+                  <TableHead>状态</TableHead>
+                  <TableHead>总用例</TableHead>
+                  <TableHead>通过</TableHead>
+                  <TableHead>失败</TableHead>
+                  <TableHead>创建时间</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {reportsData?.items.map((report) => (
+                  <TableRow key={report.id}>
+                    <TableCell>{report.id}</TableCell>
+                    <TableCell>{report.project_name}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          report.status === "completed"
+                            ? "default"
+                            : report.status === "failed"
+                              ? "destructive"
+                              : "secondary"
+                        }
+                        className={
+                          report.status === "completed"
+                            ? "bg-green-100 text-green-700 hover:bg-green-100"
+                            : ""
+                        }
                       >
-                        {i % 3 === 0 ? (
-                          <XCircle className="h-5 w-5" />
-                        ) : (
-                          <CheckCircle className="h-5 w-5" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-medium">执行 #{1000 + i}</div>
-                        <div className="text-sm text-gray-500">
-                          {executionData.project} - {executionData.totalCases} 个用例
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-8">
-                      <div className="text-center">
-                        <div className="text-sm text-gray-500">通过率</div>
-                        <div className="font-medium">
-                          {i % 3 === 0 ? '89%' : '98%'}
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm text-gray-500">耗时</div>
-                        <div className="font-medium">5分{30 - i * 3}秒</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm text-gray-500">时间</div>
-                        <div className="font-medium">
-                          {i === 1 ? '今天' : `${i} 天前`}
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm">
+                        {report.status === "completed"
+                          ? "已完成"
+                          : report.status === "failed"
+                            ? "失败"
+                            : "运行中"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{report.total_test_cases}</TableCell>
+                    <TableCell>{report.passed}</TableCell>
+                    <TableCell>{report.failed}</TableCell>
+                    <TableCell>
+                      {new Date(report.created_at).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedReportId(report.id)}
+                      >
                         查看详情
                       </Button>
-                    </div>
-                  </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {reportsData && reportsData.pages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            共 {reportsData.total} 条记录，第 {reportsData.page} /{" "}
+            {reportsData.pages} 页
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              上一页
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(reportsData.pages, p + 1))}
+              disabled={page === reportsData.pages}
+            >
+              下一页
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <Dialog
+        open={selectedReportId !== null}
+        onOpenChange={(open) => !open && setSelectedReportId(null)}
+      >
+        <DialogContent className="!max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              报告详情 {selectedReportId ? `#${selectedReportId}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+
+          {isDetailLoading || !reportDetail ? (
+            <div className="py-12 text-center text-gray-500">加载详情中...</div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    总用例：{reportDetail.total_test_cases}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6 text-green-600">
+                    通过：{reportDetail.passed}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6 text-red-600">
+                    失败：{reportDetail.failed}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    耗时：{reportDetail.total_duration} ms
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <Card>
+                <CardHeader>
+                  <CardTitle>用例执行结果</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>用例ID</TableHead>
+                        <TableHead>用例名称</TableHead>
+                        <TableHead>状态</TableHead>
+                        <TableHead>耗时(ms)</TableHead>
+                        <TableHead>步骤数</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reportDetail.test_case_results.map((result) => (
+                        <TableRow key={result.test_case_id}>
+                          <TableCell>{result.test_case_id}</TableCell>
+                          <TableCell>{result.test_case_name}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                result.status === "success"
+                                  ? "default"
+                                  : "destructive"
+                              }
+                              className={
+                                result.status === "success"
+                                  ? "bg-green-100 text-green-700 hover:bg-green-100"
+                                  : ""
+                              }
+                            >
+                              {result.status === "success"
+                                ? "通过"
+                                : result.status === "failed"
+                                  ? "失败"
+                                  : "跳过"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{result.duration}</TableCell>
+                          <TableCell>{result.steps.length}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

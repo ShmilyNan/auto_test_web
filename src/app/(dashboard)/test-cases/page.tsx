@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Pencil, Trash2, Play } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Play, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -49,6 +49,7 @@ import { TESTCASE } from "@/lib/constants/permissions";
 import TestCaseForm from "@/components/test-cases/test-case-form";
 import { HttpMethod } from "@/types/test-case";
 import { getTestCases, deleteTestCase } from "@/lib/api/test-cases";
+import { executeTest, generateReport } from "@/lib/api/reports";
 import { getProjects } from "@/lib/api/projects";
 import type { TestCaseListResponse } from "@/types/test-case";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -96,6 +97,43 @@ export default function TestCasesPage() {
 
   const testCases = testCasesData?.items || [];
 
+  const executeMutation = useMutation({
+    mutationFn: executeTest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["test-cases"] });
+      toast({
+        title: "执行成功",
+        description: "测试用例已触发执行",
+      });
+    },
+    onError: (error: unknown) => {
+      toast({
+        variant: "destructive",
+        title: "执行失败",
+        description:
+          (error as { message?: string })?.message || "执行测试用例失败",
+      });
+    },
+  });
+
+  const generateReportMutation = useMutation({
+    mutationFn: generateReport,
+    onSuccess: () => {
+      toast({
+        title: "生成成功",
+        description: "测试报告已生成，请前往测试报告页面查看",
+      });
+    },
+    onError: (error: unknown) => {
+      toast({
+        variant: "destructive",
+        title: "生成失败",
+        description:
+          (error as { message?: string })?.message || "生成测试报告失败",
+      });
+    },
+  });
+
   // 删除测试用例
   const deleteMutation = useMutation({
     mutationFn: deleteTestCase,
@@ -107,11 +145,12 @@ export default function TestCasesPage() {
         description: "测试用例已删除",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         variant: "destructive",
         title: "删除失败",
-        description: error.response?.data?.detail || "删除测试用例失败",
+        description:
+          (error as { message?: string })?.message || "删除测试用例失败",
       });
     },
   });
@@ -132,10 +171,31 @@ export default function TestCasesPage() {
     }
   };
 
-  const handleRunTest = () => {
-    toast({
-      title: "功能待实现",
-      description: "测试运行功能待实现",
+  const handleRunTest = (testCase: TestCaseListResponse) => {
+    executeMutation.mutate({
+      project_id: testCase.project_id,
+      test_case_ids: [testCase.id],
+    });
+  };
+
+  const handleGenerateReport = (testCase: TestCaseListResponse) => {
+    const canGenerate =
+      testCase.can_generate_report ??
+      (testCase.last_execution_status &&
+        testCase.last_execution_status !== "not_run" &&
+        testCase.last_execution_status !== "running");
+
+    if (!canGenerate) {
+      toast({
+        variant: "destructive",
+        title: "无法生成",
+        description: "该用例尚未执行，无法生成测试报告",
+      });
+      return;
+    }
+
+    generateReportMutation.mutate({
+      test_case_id: testCase.id,
     });
   };
 
@@ -306,9 +366,25 @@ export default function TestCasesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={handleRunTest}
+                          onClick={() => handleRunTest(testCase)}
                         >
                           <Play className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleGenerateReport(testCase)}
+                          disabled={
+                            !(
+                              testCase.can_generate_report ??
+                              (testCase.last_execution_status &&
+                                testCase.last_execution_status !== "not_run" &&
+                                testCase.last_execution_status !== "running")
+                            )
+                          }
+                          title="生成测试报告"
+                        >
+                          <FileText className="h-4 w-4" />
                         </Button>
                         <PermissionGuard permission={TESTCASE.UPDATE}>
                           <Button
@@ -407,7 +483,7 @@ export default function TestCasesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除测试用例 "{selectedTestCase?.name}" 吗？此操作不可恢复。
+              确定要删除测试用例「{selectedTestCase?.name}」吗？此操作不可恢复。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
