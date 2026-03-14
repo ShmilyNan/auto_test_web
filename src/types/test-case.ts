@@ -99,4 +99,6 @@ export interface TestCaseListResponse {
   method?: HttpMethod;
   url?: string;
   project_name?: string;
+  can_generate_report?: boolean;
+  last_execution_status?: 'not_run' | 'running' | 'passed' | 'failed';
 }

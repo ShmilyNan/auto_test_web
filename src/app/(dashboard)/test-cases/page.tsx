@@ -327,7 +327,7 @@ export default function TestCasesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[100px]">ID</TableHead>
+                  <TableHead className="w-25">ID</TableHead>
                   <TableHead>用例名称</TableHead>
                   <TableHead>方法</TableHead>
                   <TableHead>URL</TableHead>
@@ -445,7 +445,7 @@ export default function TestCasesPage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="!max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-6xl! max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>新建测试用例</DialogTitle>
             <DialogDescription>创建新的 API 测试用例</DialogDescription>
@@ -458,7 +458,7 @@ export default function TestCasesPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="!max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-6xl! max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>编辑测试用例</DialogTitle>
             <DialogDescription>修改测试用例信息</DialogDescription>

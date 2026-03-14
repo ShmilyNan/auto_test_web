@@ -211,7 +211,7 @@ export default function ReportsPage() {
         open={selectedReportId !== null}
         onOpenChange={(open) => !open && setSelectedReportId(null)}
       >
-        <DialogContent className="!max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl! max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               报告详情 {selectedReportId ? `#${selectedReportId}` : ""}

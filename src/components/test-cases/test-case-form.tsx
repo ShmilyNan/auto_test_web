@@ -41,6 +41,14 @@ import {
   updateTestCase,
 } from "@/lib/api/test-cases";
 import { getProjects } from "@/lib/api/projects";
+import type {
+  TestCaseResponse,
+  TestCaseCreate,
+  TestCaseUpdate,
+  Assertion,
+  TestStep,
+  HttpMethod,
+} from "@/types/test-case";
 
 // Form schema
 const testCaseSchema = z.object({
@@ -72,11 +80,12 @@ export default function TestCaseForm({
   const [curlCommand, setCurlCommand] = useState("");
 
   // 获取测试用例详情（编辑模式）
-  const { data: testCaseData, isLoading: isLoadingTestCase } = useQuery({
-    queryKey: ["test-case", testCaseId],
-    queryFn: () => getTestCase(testCaseId!),
-    enabled: !!testCaseId,
-  });
+  const { data: testCaseData, isLoading: isLoadingTestCase } =
+    useQuery<TestCaseResponse>({
+      queryKey: ["test-case", testCaseId],
+      queryFn: () => getTestCase(testCaseId!),
+      enabled: !!testCaseId,
+    });
 
   // 获取项目列表
   const { data: projectsData } = useQuery({
@@ -116,21 +125,14 @@ export default function TestCaseForm({
 
       // 从 steps 中提取第一个步骤的数据（如果是单步骤用例）
       if (testCaseData.steps && testCaseData.steps.length > 0) {
-        const firstStep = testCaseData.steps[0];
+        const firstStep = testCaseData.steps[0] as TestStep;
+        // 设置基础字段
         setValue("method", firstStep.method);
         setValue("url", firstStep.url);
 
         // 解析 headers
         if (firstStep.headers) {
-          try {
-            const headersObj =
-              typeof firstStep.headers === "string"
-                ? JSON.parse(firstStep.headers)
-                : firstStep.headers;
-            setHeaders(headersObj);
-          } catch (e) {
-            console.error("Failed to parse headers:", e);
-          }
+          setHeaders(firstStep.headers);
         }
 
         // 解析 body
@@ -149,7 +151,7 @@ export default function TestCaseForm({
         // 解析断言获取期望状态码
         if (firstStep.assertions && firstStep.assertions.length > 0) {
           const statusAssertion = firstStep.assertions.find(
-            (a: any) => a.type === "status_code",
+            (a: Assertion) => a.type === "status_code",
           );
           if (statusAssertion) {
             setValue("expected_status", statusAssertion.expected.toString());
@@ -192,7 +194,7 @@ export default function TestCaseForm({
   };
 
   // 创建测试用例
-  const createMutation = useMutation({
+  const createMutation = useMutation<TestCaseResponse, Error, TestCaseCreate>({
     mutationFn: createTestCase,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-cases"] });
@@ -206,19 +208,23 @@ export default function TestCaseForm({
       reset();
       setHeaders({});
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         variant: "destructive",
         title: "创建失败",
-        description: error.response?.data?.detail || "创建测试用例失败",
+        description:
+          (error as any).response?.data?.detail || "创建测试用例失败",
       });
     },
   });
 
   // 更新测试用例
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      updateTestCase(id, data),
+  const updateMutation = useMutation<
+    TestCaseResponse,
+    Error,
+    { id: number; data: TestCaseUpdate }
+  >({
+    mutationFn: ({ id, data }) => updateTestCase(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-cases"] });
       toast({
@@ -229,27 +235,28 @@ export default function TestCaseForm({
         onSuccess();
       }
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         variant: "destructive",
         title: "更新失败",
-        description: error.response?.data?.detail || "更新测试用例失败",
+        description:
+          (error as any).response?.data?.detail || "更新测试用例失败",
       });
     },
   });
 
   const onSubmit = (data: TestCaseForm) => {
     // 构建断言数组
-    const assertions: any[] = [];
+    const assertions: Assertion[] = [];
     if (data.expected_status) {
       assertions.push({
         type: "status_code",
-        expected: parseInt(data.expected_status),
+        expected: parseInt(data.expected_status, 10),
       });
     }
 
     // 构建步骤数据
-    const step: any = {
+    const step: TestStep = {
       name: data.name,
       method: data.method,
       url: data.url,
@@ -275,7 +282,8 @@ export default function TestCaseForm({
     }
 
     // 构建提交数据
-    const submitData: any = {
+    const submitData: TestCaseCreate = {
+      project_id: watchedProjectId ?? 0,
       name: data.name,
       steps: [step],
       is_active: true,
@@ -342,11 +350,11 @@ export default function TestCaseForm({
                   <div className="space-y-2">
                     <Label htmlFor="project_id">所属项目</Label>
                     <Select
-                      value={watchedProjectId?.toString()}
+                      value={watchedProjectId?.toString() ?? ""}
                       onValueChange={(value) =>
                         setValue(
                           "project_id",
-                          value ? parseInt(value) : undefined,
+                          value ? parseInt(value, 10) : undefined,
                         )
                       }
                     >
@@ -371,9 +379,9 @@ export default function TestCaseForm({
                   <div className="space-y-2">
                     <Label htmlFor="method">请求方法 *</Label>
                     <Select
-                      value={watchedMethod || "GET"}
+                      value={watchedMethod}
                       onValueChange={(value) =>
-                        setValue("method", value as any)
+                        setValue("method", value as HttpMethod)
                       }
                     >
                       <SelectTrigger>
@@ -394,7 +402,7 @@ export default function TestCaseForm({
                   <div className="space-y-2">
                     <Label htmlFor="expected_status">期望状态码</Label>
                     <Select
-                      value={watchedExpectedStatus || ""}
+                      value={watchedExpectedStatus ?? ""}
                       onValueChange={(value) =>
                         setValue("expected_status", value)
                       }
@@ -472,7 +480,7 @@ export default function TestCaseForm({
                     id="body"
                     {...register("body")}
                     placeholder='{"name": "test", "value": 123}'
-                    className="min-h-[150px] font-mono text-sm"
+                    className="min-h-37.5 font-mono text-sm"
                   />
                 </div>
 
@@ -575,7 +583,7 @@ export default function TestCaseForm({
                 value={curlCommand}
                 onChange={(e) => setCurlCommand(e.target.value)}
                 placeholder='curl -X POST https://api.example.com/users -H "Content-Type: application/json" -d "{\"name\":\"test\"}"'
-                className="min-h-[150px] font-mono text-sm"
+                className="min-h-37.5 font-mono text-sm"
               />
             </div>
             <Button onClick={handleParseCurl} className="w-full">
