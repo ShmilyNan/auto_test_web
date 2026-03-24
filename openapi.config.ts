@@ -7,7 +7,7 @@
  */
 
 module.exports = {
-  input: process.env.OPENAPI_URL || 'http://localhost:8899/docs', // 后端 Swagger 文档地址
+  input: process.env.OPENAPI_URL || 'http://localhost:5000/docs', // 后端 Swagger 文档地址
   output: './src/lib/api/generated', // 输出目录
   clientName: 'ApiClient',
   useOptions: true,

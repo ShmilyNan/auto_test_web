@@ -9,17 +9,12 @@ import type {
 
 // 获取所有权限列表
 export const getPermissions = async (): Promise<PermissionResponse[]> => {
-  const response = await apiClient.get<PermissionResponse[]>('/api/permissions');
-  return response;
+  return apiClient.get<PermissionResponse[]>('/permissions/');
 };
 
 // 创建权限
 export const createPermission = async (
   data: PermissionCreate
 ): Promise<PermissionResponse> => {
-  const response = await apiClient.post<PermissionResponse>(
-    '/api/permissions',
-    data
-  );
-  return response;
+  return apiClient.post<PermissionResponse>('/permissions/', data);
 };

@@ -1,44 +1,39 @@
 /**
  * 项目管理 API
+ * 基于 OpenAPI 文档更新
  */
 import { apiClient } from './client';
 import type {
   ProjectResponse,
   ProjectCreate,
   ProjectUpdate,
-  ProjectListResponse,
-  ProjectStatsResponse,
+  ProjectMemberResponse,
+  ProjectMemberCreate,
+  DeleteProjectResponse,
+  DeleteProjectError,
 } from '@/types/project';
-import type { PaginatedResponse, PaginationParams } from '@/types/common';
+import type { PaginationParams } from '@/types/common';
 
-// 获取项目列表（分页）
+// 获取项目列表
 export const getProjects = async (
-  params?: PaginationParams & {
-    name?: string;
-    is_active?: boolean;
-  }
-): Promise<PaginatedResponse<ProjectListResponse>> => {
-  const response = await apiClient.get<PaginatedResponse<ProjectListResponse>>(
-    '/api/projects',
-    params
-  );
-  return response;
+  params?: PaginationParams
+): Promise<ProjectResponse[]> => {
+  return apiClient.get<ProjectResponse[]>('/projects/', params);
+};
+
+// 获取我的项目
+export const getMyProjects = async (): Promise<ProjectResponse[]> => {
+  return apiClient.get<ProjectResponse[]>('/projects/my');
 };
 
 // 获取项目详情
 export const getProject = async (projectId: number): Promise<ProjectResponse> => {
-  const response = await apiClient.get<ProjectResponse>(
-    `/api/projects/${projectId}`
-  );
-  return response;
+  return apiClient.get<ProjectResponse>(`/projects/${projectId}`);
 };
 
 // 创建项目
-export const createProject = async (
-  data: ProjectCreate
-): Promise<ProjectResponse> => {
-  const response = await apiClient.post<ProjectResponse>('/api/projects', data);
-  return response;
+export const createProject = async (data: ProjectCreate): Promise<ProjectResponse> => {
+  return apiClient.post<ProjectResponse>('/projects/', data);
 };
 
 // 更新项目
@@ -46,27 +41,52 @@ export const updateProject = async (
   projectId: number,
   data: ProjectUpdate
 ): Promise<ProjectResponse> => {
-  const response = await apiClient.put<ProjectResponse>(
-    `/api/projects/${projectId}`,
-    data
-  );
-  return response;
+  return apiClient.put<ProjectResponse>(`/projects/${projectId}`, data);
 };
 
-// 删除/归档项目
+// 删除项目
 export const deleteProject = async (
   projectId: number
-): Promise<{ message: string }> => {
-  const response = await apiClient.delete<{ message: string }>(
-    `/api/projects/${projectId}`
-  );
-  return response;
+): Promise<DeleteProjectResponse> => {
+  return apiClient.delete<DeleteProjectResponse>(`/projects/${projectId}`);
 };
 
-// 获取项目统计
-export const getProjectStats = async (): Promise<ProjectStatsResponse[]> => {
-  const response = await apiClient.get<ProjectStatsResponse[]>(
-    '/api/projects/stats'
+// 获取项目成员列表
+export const getProjectMembers = async (
+  projectId: number
+): Promise<ProjectMemberResponse[]> => {
+  return apiClient.get<ProjectMemberResponse[]>(`/projects/${projectId}/members`);
+};
+
+// 添加项目成员
+export const addProjectMember = async (
+  projectId: number,
+  data: ProjectMemberCreate
+): Promise<ProjectMemberResponse> => {
+  return apiClient.post<ProjectMemberResponse>(
+    `/projects/${projectId}/members`,
+    data
   );
-  return response;
+};
+
+// 移除项目成员
+export const removeProjectMember = async (
+  projectId: number,
+  userId: number
+): Promise<{ message: string }> => {
+  return apiClient.delete<{ message: string }>(
+    `/projects/${projectId}/members/${userId}`
+  );
+};
+
+// 更新项目成员角色
+export const updateMemberRole = async (
+  projectId: number,
+  userId: number,
+  role: string
+): Promise<ProjectMemberResponse> => {
+  return apiClient.put<ProjectMemberResponse>(
+    `/projects/${projectId}/members/${userId}/role`,
+    { role }
+  );
 };

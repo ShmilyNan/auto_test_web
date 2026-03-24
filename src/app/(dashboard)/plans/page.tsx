@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Shield, BadgeCheck } from "lucide-react";
+import { Plus, Pencil, Trash2, Play, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,71 +38,59 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { getUsers, deleteUser } from "@/lib/api/users";
-import type { UserResponse } from "@/types/auth";
-import UserForm from "@/components/users/user-form";
+import { getPlans, deletePlan } from "@/lib/api/plans";
+import type { TestPlanResponse } from "@/types/plan";
+import PlanForm from "@/components/plans/plan-form";
 
-export default function UsersPage() {
+export default function PlansPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<TestPlanResponse | null>(
+    null,
+  );
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // 获取用户列表
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => getUsers(),
+  // 获取测试计划列表
+  const { data: plans, isLoading } = useQuery({
+    queryKey: ["plans"],
+    queryFn: () => getPlans(),
   });
 
-  // 删除用户
+  // 删除测试计划
   const deleteMutation = useMutation({
-    mutationFn: deleteUser,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+    mutationFn: deletePlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
       setIsDeleteDialogOpen(false);
       toast({
         title: "成功",
-        description: data.message || "用户已删除",
+        description: "测试计划已删除",
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
         title: "删除失败",
-        description:
-          error.response?.data?.detail || error.message || "删除用户失败",
+        description: error.response?.data?.detail || "删除测试计划失败",
       });
     },
   });
 
-  const handleEdit = (user: UserResponse) => {
-    setSelectedUser(user);
+  const handleEdit = (plan: TestPlanResponse) => {
+    setSelectedPlan(plan);
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (user: UserResponse) => {
-    setSelectedUser(user);
+  const handleDelete = (plan: TestPlanResponse) => {
+    setSelectedPlan(plan);
     setIsDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = () => {
-    if (selectedUser) {
-      deleteMutation.mutate(selectedUser.id);
-    }
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "bg-red-100 text-red-800";
-      case "manager":
-        return "bg-blue-100 text-blue-800";
-      case "user":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+    if (selectedPlan) {
+      deleteMutation.mutate(selectedPlan.id);
     }
   };
 
@@ -111,89 +99,74 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">用户管理</h1>
-          <p className="mt-1 text-sm text-gray-500">管理系统用户和权限</p>
+          <h1 className="text-3xl font-bold text-gray-900">测试计划</h1>
+          <p className="mt-1 text-sm text-gray-500">管理和执行测试计划</p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          新建用户
+          新建计划
         </Button>
       </div>
 
-      {/* Users List */}
+      {/* Plans List */}
       <Card>
         <CardHeader>
-          <CardTitle>用户列表</CardTitle>
-          <CardDescription>共 {users?.length || 0} 个用户</CardDescription>
+          <CardTitle>计划列表</CardTitle>
+          <CardDescription>共 {plans?.length || 0} 个测试计划</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-12 text-gray-500">加载中...</div>
-          ) : !users || users.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">暂无用户数据</div>
+          ) : !plans || plans.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              暂无测试计划数据
+            </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>用户名</TableHead>
-                  <TableHead>邮箱</TableHead>
-                  <TableHead>姓名</TableHead>
-                  <TableHead>角色</TableHead>
+                  <TableHead>计划名称</TableHead>
+                  <TableHead>项目ID</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.id}</TableCell>
+                {plans.map((plan) => (
+                  <TableRow key={plan.id}>
+                    <TableCell className="font-medium">{plan.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {user.username}
-                        {user.is_superuser && (
-                          <Badge variant="outline" className="text-yellow-600">
-                            <Shield className="mr-1 h-3 w-3" />
-                            超级管理员
-                          </Badge>
-                        )}
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        {plan.name}
                       </div>
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.full_name || "-"}</TableCell>
+                    <TableCell>{plan.project_id}</TableCell>
                     <TableCell>
-                      <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {user.is_active ? (
-                        <Badge variant="default" className="bg-green-500">
-                          <BadgeCheck className="mr-1 h-3 w-3" />
-                          活跃
-                        </Badge>
+                      {plan.is_active ? (
+                        <Badge className="bg-green-500">启用</Badge>
                       ) : (
                         <Badge variant="secondary">禁用</Badge>
                       )}
                     </TableCell>
                     <TableCell>
-                      {new Date(user.created_at).toLocaleString()}
+                      {new Date(plan.created_at).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(user)}
+                          onClick={() => handleEdit(plan)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(user)}
-                          disabled={user.is_superuser}
+                          onClick={() => handleDelete(plan)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -211,10 +184,10 @@ export default function UsersPage() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>新建用户</DialogTitle>
-            <DialogDescription>创建新的系统用户账号</DialogDescription>
+            <DialogTitle>新建测试计划</DialogTitle>
+            <DialogDescription>创建新的测试计划</DialogDescription>
           </DialogHeader>
-          <UserForm onSuccess={() => setIsCreateDialogOpen(false)} />
+          <PlanForm onSuccess={() => setIsCreateDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
@@ -222,12 +195,12 @@ export default function UsersPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>编辑用户</DialogTitle>
-            <DialogDescription>修改用户信息和权限</DialogDescription>
+            <DialogTitle>编辑测试计划</DialogTitle>
+            <DialogDescription>修改测试计划信息</DialogDescription>
           </DialogHeader>
-          {selectedUser && (
-            <UserForm
-              userId={selectedUser.id}
+          {selectedPlan && (
+            <PlanForm
+              planId={selectedPlan.id}
               onSuccess={() => setIsEditDialogOpen(false)}
             />
           )}
@@ -243,7 +216,7 @@ export default function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除用户 "{selectedUser?.username}" 吗？此操作不可恢复。
+              确定要删除测试计划 "{selectedPlan?.name}" 吗？此操作不可恢复。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

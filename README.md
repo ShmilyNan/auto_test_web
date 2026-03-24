@@ -17,18 +17,21 @@
 ## 功能特性
 
 ### 1. 仪表盘
+
 - 测试执行概览统计
 - 执行趋势图表
 - 项目通过率分析
 - 最近执行记录
 
 ### 2. 项目管理
+
 - 项目列表展示
 - 项目创建和编辑
 - 项目成员管理
 - 项目归档功能
 
 ### 3. 测试用例管理
+
 - 多种用例导入方式:
   - 手工添加（动态表单）
   - 文件上传（YAML/JSON）
@@ -38,12 +41,14 @@
 - 用例标签管理
 
 ### 4. 测试报告
+
 - 执行结果概览
 - 用例详细执行记录
 - 执行趋势分析
 - 报告导出功能
 
 ### 5. RBAC 权限系统
+
 - 基于角色的访问控制
 - 权限定义:
   - 项目管理权限（创建、读取、更新、删除）
@@ -97,7 +102,7 @@ pnpm install
 pnpm dev
 ```
 
-访问 http://localhost:5000
+访问 http://localhost:8080
 
 ### 构建生产版本
 
@@ -118,12 +123,12 @@ pnpm start
 使用 `PermissionGuard` 组件控制 UI 元素显示：
 
 ```tsx
-import { PermissionGuard } from '@/components/auth/permission-guard';
-import { Permission } from '@/lib/rbac/types';
+import { PermissionGuard } from "@/components/auth/permission-guard";
+import { Permission } from "@/lib/rbac/types";
 
 <PermissionGuard permission={Permission.CASE_CREATE}>
   <Button>创建用例</Button>
-</PermissionGuard>
+</PermissionGuard>;
 ```
 
 ### 表单验证
@@ -131,16 +136,20 @@ import { Permission } from '@/lib/rbac/types';
 使用 React Hook Form + Zod 进行表单验证：
 
 ```tsx
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 const schema = z.object({
   name: z.string().min(1),
   url: z.string().url(),
 });
 
-const { register, handleSubmit, formState: { errors } } = useForm({
+const {
+  register,
+  handleSubmit,
+  formState: { errors },
+} = useForm({
   resolver: zodResolver(schema),
 });
 ```
@@ -150,10 +159,10 @@ const { register, handleSubmit, formState: { errors } } = useForm({
 使用 TanStack Query 获取数据：
 
 ```tsx
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
 const { data, isLoading, error } = useQuery({
-  queryKey: ['projects'],
+  queryKey: ["projects"],
   queryFn: () => fetchProjects(),
 });
 ```

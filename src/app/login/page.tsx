@@ -1,22 +1,29 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { TestTube, LogIn, AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useUserStore } from '@/store/user';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { TestTube, LogIn, AlertCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useUserStore } from "@/store/user";
 
 // 表单验证 schema
 const loginSchema = z.object({
-  username: z.string().min(1, '用户名不能为空'),
-  password: z.string().min(1, '密码不能为空'),
+  username: z.string().min(1, "用户名不能为空"),
+  password: z.string().min(1, "密码不能为空"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -34,18 +41,18 @@ export default function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: 'admin',
-      password: 'admin123',
+      username: "admin",
+      password: "admin123",
     },
   });
 
   // 监听认证状态变化，登录成功后自动跳转
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('登录成功，isAuthenticated = true，准备跳转');
+      console.log("登录成功，isAuthenticated = true，准备跳转");
       setIsLoading(false);
       // 使用 replace 而不是 push，避免历史记录堆积
-      router.replace('/');
+      router.replace("/");
     }
   }, [isAuthenticated, router]);
 
@@ -56,13 +63,13 @@ export default function LoginPage() {
     try {
       await login(data.username, data.password);
 
-      console.log('登录成功，准备跳转');
+      console.log("登录成功，准备跳转");
 
       // 登录成功后，由 useEffect 监听 isAuthenticated 变化并自动跳转
       // 这里只负责登录，不负责跳转
     } catch (err: any) {
-      console.error('登录失败:', err);
-      setError(err.message || '登录失败，请检查用户名和密码');
+      console.error("登录失败:", err);
+      setError(err.message || "登录失败，请检查用户名和密码");
       setIsLoading(false);
     }
   };
@@ -84,7 +91,9 @@ export default function LoginPage() {
         {/* 登录卡片 */}
         <Card className="shadow-xl border-0">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">欢迎回来</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">
+              欢迎回来
+            </CardTitle>
             <CardDescription className="text-center">
               请输入您的账号和密码登录系统
             </CardDescription>
@@ -108,11 +117,13 @@ export default function LoginPage() {
                   id="username"
                   type="text"
                   placeholder="请输入用户名"
-                  {...register('username')}
+                  {...register("username")}
                   disabled={isLoading}
                 />
                 {errors.username && (
-                  <p className="text-sm text-red-600">{errors.username.message}</p>
+                  <p className="text-sm text-red-600">
+                    {errors.username.message}
+                  </p>
                 )}
               </div>
 
@@ -123,11 +134,13 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   placeholder="请输入密码"
-                  {...register('password')}
+                  {...register("password")}
                   disabled={isLoading}
                 />
                 {errors.password && (
-                  <p className="text-sm text-red-600">{errors.password.message}</p>
+                  <p className="text-sm text-red-600">
+                    {errors.password.message}
+                  </p>
                 )}
               </div>
 

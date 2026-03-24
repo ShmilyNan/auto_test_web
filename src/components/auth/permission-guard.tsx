@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { useUserStore } from '@/store/user';
+import { ReactNode } from "react";
+import { useUserStore } from "@/store/user";
 
 interface PermissionGuardProps {
   permission: string;
@@ -12,13 +12,36 @@ interface PermissionGuardProps {
 /**
  * 权限守卫组件
  * 根据用户权限控制子组件显示
+ * 注意：当前后端API未返回权限数据，此组件暂时基于角色判断
  */
 export function PermissionGuard({
   permission,
   children,
   fallback = null,
 }: PermissionGuardProps) {
-  const hasPermission = useUserStore((state) => state.hasPermission(permission));
+  const { user } = useUserStore();
+
+  // 未登录或用户信息不存在
+  if (!user) {
+    return <>{fallback}</>;
+  }
+
+  // 超级管理员拥有所有权限
+  if (user.is_superuser) {
+    return <>{children}</>;
+  }
+
+  // 根据角色判断权限（简化版本）
+  // TODO: 等待后端API返回权限数据后再完善
+  const rolePermissions: Record<string, string[]> = {
+    admin: ["*"],
+    manager: ["project:*", "test-case:*", "plan:*", "report:read"],
+    user: ["test-case:read", "test-case:create", "report:read"],
+  };
+
+  const userPermissions = rolePermissions[user.role] || [];
+  const hasPermission =
+    userPermissions.includes("*") || userPermissions.includes(permission);
 
   if (!hasPermission) {
     return <>{fallback}</>;
@@ -42,6 +65,7 @@ export function HasAnyPermission({
   fallback = null,
 }: HasAnyPermissionProps) {
   const { user } = useUserStore();
+
   if (!user) {
     return <>{fallback}</>;
   }
@@ -51,10 +75,17 @@ export function HasAnyPermission({
     return <>{children}</>;
   }
 
-  const hasAny = permissions.some((permission) =>
-    user.roles.some((role) =>
-      role.permissions.some((p) => p.code === permission)
-    )
+  // 简化判断
+  const rolePermissions: Record<string, string[]> = {
+    admin: ["*"],
+    manager: ["project:*", "test-case:*", "plan:*", "report:read"],
+    user: ["test-case:read", "test-case:create", "report:read"],
+  };
+
+  const userPermissions = rolePermissions[user.role] || [];
+  const hasAny = permissions.some(
+    (permission) =>
+      userPermissions.includes("*") || userPermissions.includes(permission),
   );
 
   if (!hasAny) {
@@ -89,10 +120,17 @@ export function HasAllPermissions({
     return <>{children}</>;
   }
 
-  const hasAll = permissions.every((permission) =>
-    user.roles.some((role) =>
-      role.permissions.some((p) => p.code === permission)
-    )
+  // 简化判断
+  const rolePermissions: Record<string, string[]> = {
+    admin: ["*"],
+    manager: ["project:*", "test-case:*", "plan:*", "report:read"],
+    user: ["test-case:read", "test-case:create", "report:read"],
+  };
+
+  const userPermissions = rolePermissions[user.role] || [];
+  const hasAll = permissions.every(
+    (permission) =>
+      userPermissions.includes("*") || userPermissions.includes(permission),
   );
 
   if (!hasAll) {

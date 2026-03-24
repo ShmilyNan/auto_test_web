@@ -1,40 +1,45 @@
 /**
  * 认证 API
+ * 基于 OpenAPI 文档更新
  */
 import { apiClient } from './client';
 import type {
-  LoginRequest,
-  TokenResponse,
   UserResponse,
-  ChangePasswordRequest,
+  UserCreate,
+  UserUpdate,
+  LoginRequest,
+  Token,
 } from '@/types/auth';
-import type { ResponseModel } from '@/types/common';
 
-// 用户登录
-export const login = async (data: LoginRequest): Promise<TokenResponse> => {
-  const response = await apiClient.post<TokenResponse>('/api/auth/login', data);
-  return response;
+// 用户注册
+export const register = async (data: UserCreate): Promise<UserResponse> => {
+  return apiClient.post<UserResponse>('/auth/register', data);
+};
+
+// 用户登录（JSON格式）
+export const login = async (data: LoginRequest): Promise<Token> => {
+  return apiClient.post<Token>('/auth/login/json', data);
+};
+
+// 用户登录（表单格式）
+export const loginForm = async (username: string, password: string): Promise<Token> => {
+  const formData = new URLSearchParams();
+  formData.append('username', username);
+  formData.append('password', password);
+  
+  return apiClient.post<Token>('/auth/login', formData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
 };
 
 // 获取当前用户信息
 export const getCurrentUser = async (): Promise<UserResponse> => {
-  const response = await apiClient.get<UserResponse>('/api/auth/me');
-  return response;
+  return apiClient.get<UserResponse>('/users/me');
 };
 
-// 修改密码
-export const changePassword = async (
-  data: ChangePasswordRequest
-): Promise<ResponseModel> => {
-  const response = await apiClient.put<ResponseModel>(
-    '/api/auth/change-password',
-    data
-  );
-  return response;
-};
-
-// 用户登出
-export const logout = async (): Promise<ResponseModel> => {
-  const response = await apiClient.post<ResponseModel>('/api/auth/logout');
-  return response;
+// 更新用户信息
+export const updateUser = async (userId: number, data: UserUpdate): Promise<UserResponse> => {
+  return apiClient.put<UserResponse>(`/users/${userId}`, data);
 };

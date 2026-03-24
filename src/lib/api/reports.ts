@@ -1,52 +1,40 @@
 /**
- * 测试报告 / 执行 / 仪表盘 API
+ * 测试报告 API
+ * 基于 OpenAPI 文档更新
  */
 import { apiClient } from './client';
 import type {
   ReportResponse,
-  ReportListResponse,
-  ExecuteTestRequest,
-  GenerateReportRequest,
-  DashboardResponse,
+  ReportDetailResponse,
 } from '@/types/report';
-import type { PaginatedResponse, PaginationParams } from '@/types/common';
+import type { PaginationParams } from '@/types/common';
 
-// 获取仪表盘数据
-export const getDashboardData = async (): Promise<DashboardResponse> => {
-  const response = await apiClient.get<DashboardResponse>('/api/dashboard');
-  return response;
-};
-
-// 获取测试报告列表（分页）
+// 获取测试报告列表
 export const getReports = async (
   params?: PaginationParams & {
     project_id?: number;
-    status?: string;
   }
-): Promise<PaginatedResponse<ReportListResponse>> => {
-  const response = await apiClient.get<PaginatedResponse<ReportListResponse>>(
-    '/api/reports',
-    params
-  );
-  return response;
+): Promise<ReportResponse[]> => {
+  return apiClient.get<ReportResponse[]>('/reports/', params);
+};
+
+// 生成测试报告
+export const generateReport = async (
+  executionId: number
+): Promise<ReportResponse> => {
+  return apiClient.post<ReportResponse>(`/reports/generate/${executionId}`);
 };
 
 // 获取测试报告详情
-export const getReport = async (reportId: number): Promise<ReportResponse> => {
-  const response = await apiClient.get<ReportResponse>(`/api/reports/${reportId}`);
-  return response;
+export const getReport = async (
+  executionId: number
+): Promise<ReportDetailResponse> => {
+  return apiClient.get<ReportDetailResponse>(`/reports/${executionId}`);
 };
 
-// 执行测试
-export const executeTest = async (data: ExecuteTestRequest): Promise<ReportResponse> => {
-  const response = await apiClient.post<ReportResponse>('/api/executions/run', data);
-  return response;
-};
-
-// 由单个已执行用例生成报告
-export const generateReport = async (
-  data: GenerateReportRequest
+// 归档测试报告
+export const archiveReport = async (
+  executionId: number
 ): Promise<ReportResponse> => {
-  const response = await apiClient.post<ReportResponse>('/api/reports/generate', data);
-  return response;
+  return apiClient.post<ReportResponse>(`/reports/archive/${executionId}`);
 };

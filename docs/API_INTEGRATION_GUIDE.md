@@ -82,10 +82,10 @@
 
 ```env
 # API 基础地址
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8899/api
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
 
 # WebSocket 地址（用于实时推送）
-NEXT_PUBLIC_WS_URL=ws://localhost:8899/ws
+NEXT_PUBLIC_WS_URL=ws://localhost:5000/ws
 
 # 应用环境
 NODE_ENV=development
@@ -95,8 +95,8 @@ NODE_ENV=development
 
 | 变量名                     | 说明               | 示例值                       |
 | -------------------------- | ------------------ | ---------------------------- |
-| `NEXT_PUBLIC_API_BASE_URL` | 后端 API 基础地址  | `http://localhost:8899/api`  |
-| `NEXT_PUBLIC_WS_URL`       | WebSocket 连接地址 | `ws://localhost:8899/ws`     |
+| `NEXT_PUBLIC_API_BASE_URL` | 后端 API 基础地址  | `http://localhost:5000/api`  |
+| `NEXT_PUBLIC_WS_URL`       | WebSocket 连接地址 | `ws://localhost:5000/ws`     |
 | `NODE_ENV`                 | 运行环境           | `development` / `production` |
 
 ### 2.3 多环境配置
@@ -104,8 +104,8 @@ NODE_ENV=development
 #### 开发环境 (.env.development)
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8899/api
-NEXT_PUBLIC_WS_URL=ws://localhost:8899/ws
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+NEXT_PUBLIC_WS_URL=ws://localhost:5000/ws
 ```
 
 #### 生产环境 (.env.production)
@@ -876,12 +876,12 @@ pm.request.headers.add({
 
 - [ ] 配置环境变量（.env.local）
 - [ ] 启动前端服务：`pnpm dev`
-- [ ] 确认前端运行在 http://localhost:5000
+- [ ] 确认前端运行在 http://localhost:8080
 
 #### 后端准备
 
 - [ ] 启动后端服务
-- [ ] 确认 API 地址（如 http://localhost:8899/api）
+- [ ] 确认 API 地址（如 http://localhost:5000/api）
 - [ ] 准备测试数据
 
 #### 数据库准备
@@ -898,10 +898,10 @@ pm.request.headers.add({
 
 ```bash
 # 使用 curl 测试
-curl -X GET http://localhost:8899/api/health
+curl -X GET http://localhost:5000/api/health
 
 # 或在浏览器访问
-http://localhost:8899/api/health
+http://localhost:5000/api/health
 ```
 
 **预期结果**: 返回 200 状态码和健康检查信息
@@ -1059,7 +1059,7 @@ DELETE /api/test-cases/{id}
 // 后端配置示例
 app.use(
   cors({
-    origin: ["http://localhost:5000"], // 前端地址
+    origin: ["http://localhost:8080"], // 前端地址
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -1076,7 +1076,7 @@ export default {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8899/api/:path*", // 后端地址
+        destination: "http://localhost:5000/api/:path*", // 后端地址
       },
     ];
   },

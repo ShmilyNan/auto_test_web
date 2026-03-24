@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { usePathname } from 'next/navigation';
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -18,10 +18,12 @@ import {
   Users,
   Shield,
   Key,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,22 +31,22 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Sidebar } from '@/components/layout/sidebar';
-import { useUserStore } from '@/store/user';
+} from "@/components/ui/dropdown-menu";
+import { Sidebar } from "@/components/layout/sidebar";
+import { useUserStore } from "@/store/user";
 
 const navigation = [
-  { name: '仪表盘', href: '/', icon: LayoutDashboard },
-  { name: '项目管理', href: '/projects', icon: FolderKanban },
-  { name: '测试用例', href: '/test-cases', icon: TestTube },
-  { name: '测试报告', href: '/reports', icon: BarChart3 },
+  { name: "仪表盘", href: "/", icon: LayoutDashboard },
+  { name: "项目管理", href: "/projects", icon: FolderKanban },
+  { name: "测试用例", href: "/test-cases", icon: TestTube },
+  { name: "测试报告", href: "/reports", icon: BarChart3 },
   {
-    name: '系统设置',
+    name: "系统设置",
     icon: Settings,
     children: [
-      { name: '用户管理', href: '/users', icon: Users },
-      { name: '角色管理', href: '/roles', icon: Shield },
-      { name: '权限管理', href: '/permissions', icon: Key },
+      { name: "用户管理", href: "/users", icon: Users },
+      { name: "角色管理", href: "/roles", icon: Shield },
+      { name: "权限管理", href: "/permissions", icon: Key },
     ],
   },
 ];
@@ -57,21 +59,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/login');
+    router.push("/login");
   };
 
   // 获取用户名首字母作为头像
   const userInitial = user?.full_name
     ? user.full_name.charAt(0).toUpperCase()
-    : user?.username?.charAt(0).toUpperCase() || 'U';
+    : user?.username?.charAt(0).toUpperCase() || "U";
 
   // 获取用户角色名称
-  const roleNames = user?.roles.map(r => r.name).join(', ') || '用户';
+  const roleName = user?.role || "用户";
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} navigation={navigation} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+        navigation={navigation}
+      />
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -88,7 +94,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Button>
             <div className="flex items-center gap-2">
               <TestTube className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">自动化测试平台</span>
+              <span className="text-xl font-bold text-gray-900">
+                自动化测试平台
+              </span>
             </div>
           </div>
 
@@ -114,7 +122,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-blue-600 text-white">
                       {userInitial}
@@ -125,11 +136,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user?.full_name || user?.username}</p>
+                    <p className="text-sm font-medium">
+                      {user?.full_name || user?.username}
+                    </p>
                     <p className="text-xs text-gray-500">{user?.email}</p>
                     <div className="flex items-center gap-1 text-xs text-blue-600">
                       <User className="h-3 w-3" />
-                      {roleNames}
+                      {roleName}
                     </div>
                   </div>
                 </DropdownMenuLabel>
@@ -143,7 +156,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   账号设置
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={handleLogout}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   退出登录
                 </DropdownMenuItem>

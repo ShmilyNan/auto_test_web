@@ -1,23 +1,4 @@
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-
-// 响应数据类型
-export interface ApiResponse<T = any> {
-  code: number;
-  message: string;
-  data: T;
-  timestamp: number;
-}
-
-// 列表响应类型
-export interface ListResponse<T> {
-  list: T[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-  };
-}
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // 错误类型
 export interface ApiError {
@@ -34,7 +15,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api',
+      baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -65,7 +46,7 @@ class ApiClient {
 
     // 响应拦截器
     this.client.interceptors.response.use(
-      (response: AxiosResponse<ApiResponse>) => {
+      (response) => {
         // 返回完整响应对象，在具体调用时通过 response.data 获取数据
         return response;
       },
@@ -75,11 +56,8 @@ class ApiClient {
 
           // 401 未授权，跳转登录
           if (status === 401 && typeof window !== 'undefined') {
-            // 清除认证相关缓存，避免登录页根据旧状态跳转回首页
+            // 清除 token
             localStorage.removeItem('token');
-            localStorage.removeItem('user-storage');
-            localStorage.removeItem('user-permissions');
-            localStorage.removeItem('user-roles');
             // 跳转登录页
             window.location.href = '/login';
           }

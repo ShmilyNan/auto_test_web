@@ -5,18 +5,21 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, AuthState } from '@/types/auth';
-import { authApi } from '@/lib/api';
+import type { UserResponse } from '@/types/auth';
+import { login as loginApi, getCurrentUser } from '@/lib/api/auth';
 
-interface UserState extends AuthState {
+interface UserState {
+  token: string | null;
+  user: UserResponse | null;
+  isAuthenticated: boolean;
   _hasHydrated: boolean;
-  setUser: (user: User | null) => void;
+  setUser: (user: UserResponse | null) => void;
   setToken: (token: string) => void;
   login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
   fetchUser: () => Promise<void>;
-  hasPermission: (permission: string) => boolean;
   hasRole: (roleName: string) => boolean;
+  isAdmin: () => boolean;
 }
 
 export const useUserStore = create<UserState>()(
@@ -41,28 +44,23 @@ export const useUserStore = create<UserState>()(
 
       login: async (username, password) => {
         try {
-          const response = await authApi.login({ username, password });
+          const response = await loginApi({ username, password });
           console.log('登录响应:', response);
 
           // 保存 token
-          // get().setToken(response.access_token);
           localStorage.setItem('token', response.access_token);
 
-          // 保存用户信息
+          // 获取用户信息
+          const userInfo = await getCurrentUser();
+          console.log('用户信息:', userInfo);
+
+          // 保存状态
           set({
             token: response.access_token,
-            user: response.user,
+            user: userInfo,
             isAuthenticated: true,
           });
 
-          // 保存到 localStorage（可选，供快速判断）
-          if (typeof window !== 'undefined') {
-            const permissions = response.user.roles.flatMap((role: any) =>
-              role.permissions.map((p: any) => p.name)
-            );
-            localStorage.setItem('user_permissions', JSON.stringify(permissions));
-            localStorage.setItem('user_roles', JSON.stringify(response.user.roles.map((r: any) => r.name)));
-          }
           console.log('登录状态已保存');
         } catch (error) {
           console.error('登录失败:', error);
@@ -70,63 +68,45 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      logout: async () => {
-        try {
-          await authApi.logout();
-        } catch (error) {
-          console.error('登出请求失败:', error);
-        } finally {
-          // 清除状态
-          set({
-            token: null,
-            user: null,
-            isAuthenticated: false,
-          });
+      logout: () => {
+        // 清除状态
+        set({
+          token: null,
+          user: null,
+          isAuthenticated: false,
+        });
 
-          // 清除 localStorage
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user_permissions');
-            localStorage.removeItem('user_roles');
-          }
+        // 清除 localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
         }
       },
 
       fetchUser: async () => {
         try {
-          const response = await authApi.getCurrentUser();
+          const userInfo = await getCurrentUser();
           set({
-            user: response,
+            user: userInfo,
             isAuthenticated: true,
           });
         } catch (error) {
           console.error('获取用户信息失败:', error);
           // Token 可能已过期
-          await get().logout();
+          get().logout();
           throw error;
         }
       },
 
-      hasPermission: (permission: string) => {
-        const { user } = get();
-
-        if (!user) return false;
-
-        // 超级管理员拥有所有权限
-        if (user.is_superuser) return true;
-
-        // 检查用户的所有角色是否包含该权限
-        return user.roles.some((role: any) =>
-          role.permissions.some((p: any) => p.name === permission)
-        );
-      },
-
       hasRole: (roleName: string) => {
         const { user } = get();
-
         if (!user) return false;
+        return user.role === roleName || user.is_superuser;
+      },
 
-        return user.roles.some((role: any) => role.name === roleName);
+      isAdmin: () => {
+        const { user } = get();
+        if (!user) return false;
+        return user.is_superuser || user.role === 'admin';
       },
     }),
     {

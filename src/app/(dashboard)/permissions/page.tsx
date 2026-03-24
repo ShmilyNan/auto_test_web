@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPermissions, createPermission } from '@/lib/api/permissions';
-import { useToast } from '@/components/ui/use-toast';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getPermissions, createPermission } from "@/lib/api/permissions";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Table,
   TableBody,
@@ -11,18 +11,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
-import PermissionForm from '@/components/permissions/permission-form';
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
+import PermissionForm from "@/components/permissions/permission-form";
 
 export default function PermissionsPage() {
   const { toast } = useToast();
@@ -32,7 +32,7 @@ export default function PermissionsPage() {
 
   // 获取权限列表
   const { data: permissions, isLoading } = useQuery({
-    queryKey: ['permissions'],
+    queryKey: ["permissions"],
     queryFn: getPermissions,
   });
 
@@ -41,9 +41,7 @@ export default function PermissionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">权限管理</h1>
-          <p className="text-muted-foreground mt-2">
-            查看和创建系统权限
-          </p>
+          <p className="text-muted-foreground mt-2">查看和创建系统权限</p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
@@ -80,8 +78,10 @@ export default function PermissionsPage() {
               permissions?.map((permission) => (
                 <TableRow key={permission.id}>
                   <TableCell>{permission.id}</TableCell>
-                  <TableCell className="font-medium">{permission.name}</TableCell>
-                  <TableCell>{permission.description || '-'}</TableCell>
+                  <TableCell className="font-medium">
+                    {permission.name}
+                  </TableCell>
+                  <TableCell>{permission.description || "-"}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{permission.resource}</Badge>
                   </TableCell>
@@ -89,7 +89,11 @@ export default function PermissionsPage() {
                     <Badge variant="secondary">{permission.action}</Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(permission.created_at).toLocaleDateString('zh-CN')}
+                    {permission.created_at
+                      ? new Date(permission.created_at).toLocaleDateString(
+                          "zh-CN",
+                        )
+                      : "-"}
                   </TableCell>
                 </TableRow>
               ))

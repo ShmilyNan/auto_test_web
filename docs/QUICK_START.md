@@ -13,8 +13,8 @@ cp .env.local.example .env.local
 编辑 `.env.local`，修改为实际的后端地址：
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8899/api
-NEXT_PUBLIC_WS_URL=ws://localhost:8899/ws
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+NEXT_PUBLIC_WS_URL=ws://localhost:5000/ws
 ```
 
 ---
@@ -46,7 +46,7 @@ pnpm install  # 首次运行需要安装依赖
 pnpm dev
 ```
 
-访问：http://localhost:5000
+访问：http://localhost:8080
 
 ---
 
@@ -57,7 +57,7 @@ pnpm dev
 打开浏览器或使用 Postman 访问：
 
 ```
-http://localhost:8899/api/health
+http://localhost:5000/api/health
 ```
 
 预期返回：
@@ -75,7 +75,7 @@ http://localhost:8899/api/health
 
 ```javascript
 // 测试 API 连通性
-await fetch("http://localhost:8899/api/health").then((r) => r.json());
+await fetch("http://localhost:5000/api/health").then((r) => r.json());
 ```
 
 或使用测试工具：
@@ -108,7 +108,7 @@ pnpm generate-api-types
 
 ```javascript
 // 1. 登录
-POST http://localhost:8899/api/auth/login
+POST http://localhost:5000/api/auth/login
 Body: {
   "email": "admin@example.com",
   "password": "123456"
@@ -118,7 +118,7 @@ Body: {
 localStorage.setItem('token', 'your-token-here')
 
 // 3. 验证 Token
-GET http://localhost:8899/api/auth/me
+GET http://localhost:5000/api/auth/me
 Headers: Authorization: Bearer your-token-here
 ```
 
@@ -126,10 +126,10 @@ Headers: Authorization: Bearer your-token-here
 
 ```javascript
 // 1. 获取项目列表
-GET http://localhost:8899/api/projects
+GET http://localhost:5000/api/projects
 
 // 2. 创建项目
-POST http://localhost:8899/api/projects
+POST http://localhost:5000/api/projects
 Body: {
   "name": "测试项目",
   "description": "这是联调测试项目",

@@ -1,46 +1,10 @@
 /**
  * 测试用例相关类型定义
+ * 基于 OpenAPI 文档更新
  */
 
 // HTTP 方法
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
-
-// 请求头
-export interface Header {
-  key: string;
-  value: string;
-}
-
-// 请求参数
-export interface Parameter {
-  key: string;
-  value: string;
-  type: 'query' | 'path' | 'header' | 'cookie';
-  description?: string;
-}
-
-// 断言
-export interface Assertion {
-  type: 'status_code' | 'response_time' | 'contains' | 'json_path' | 'regex';
-  expected: string | number;
-  actual?: string | number;
-  operator?: 'eq' | 'ne' | 'gt' | 'lt' | 'ge' | 'le' | 'contains';
-  description?: string;
-}
-
-// 测试步骤
-export interface TestStep {
-  id?: number;
-  name: string;
-  method: HttpMethod;
-  url: string;
-  headers?: Record<string, string>;
-  params?: Parameter[];
-  body?: unknown;
-  assertions?: Assertion[];
-  pre_script?: string;
-  post_script?: string;
-}
 
 // 测试用例响应
 export interface TestCaseResponse {
@@ -48,29 +12,69 @@ export interface TestCaseResponse {
   project_id: number;
   name: string;
   description: string | null;
-  steps: TestStep[];
+  method: HttpMethod;
+  url: string;
+  headers: string | null;  // JSON 字符串
+  body: string | null;
+  expected_status: number | null;
   is_active: boolean;
   tags: string[];
+  created_by: number;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
 }
 
-// 测试用例创建/更新
+// 测试用例创建
 export interface TestCaseCreate {
   project_id: number;
   name: string;
-  description?: string;
-  steps: TestStep[];
+  description?: string | null;
+  method: HttpMethod;
+  url: string;
+  headers?: string | null;
+  body?: string | null;
+  expected_status?: number | null;
   is_active?: boolean;
   tags?: string[];
 }
 
+// 测试用例更新
 export interface TestCaseUpdate {
   name?: string;
-  description?: string;
-  steps?: TestStep[];
+  description?: string | null;
+  method?: HttpMethod;
+  url?: string;
+  headers?: string | null;
+  body?: string | null;
+  expected_status?: number | null;
   is_active?: boolean;
   tags?: string[];
+}
+
+// 测试套件响应
+export interface TestSuiteResponse {
+  id: number;
+  project_id: number;
+  name: string;
+  description: string | null;
+  created_by: number;
+  created_at: string;
+  updated_at: string | null;
+}
+
+// 测试套件创建
+export interface TestSuiteCreate {
+  project_id: number;
+  name: string;
+  description?: string | null;
+  case_ids?: number[];
+}
+
+// 测试套件更新
+export interface TestSuiteUpdate {
+  name?: string;
+  description?: string | null;
+  case_ids?: number[];
 }
 
 // 批量导入请求
@@ -98,7 +102,4 @@ export interface TestCaseListResponse {
   created_at: string;
   method?: HttpMethod;
   url?: string;
-  project_name?: string;
-  can_generate_report?: boolean;
-  last_execution_status?: 'not_run' | 'running' | 'passed' | 'failed';
 }
