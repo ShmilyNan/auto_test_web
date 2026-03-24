@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { LucideIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { LucideIcon, ChevronDown, ChevronRight } from "lucide-react";
 
 interface NavigationItem {
   name: string;
@@ -25,7 +25,9 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, setIsOpen, navigation }: SidebarProps) {
   const pathname = usePathname();
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set(['系统设置']));
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(
+    new Set(["系统设置"]),
+  );
 
   const toggleMenu = (menuName: string) => {
     setExpandedMenus((prev) => {
@@ -47,24 +49,24 @@ export function Sidebar({ isOpen, setIsOpen, navigation }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex flex-col border-r bg-white transition-all duration-300',
-        isOpen ? 'w-64' : 'w-20'
+        "flex flex-col border-r bg-white transition-all duration-300",
+        isOpen ? "w-64" : "w-20",
       )}
     >
       {/* Logo */}
       <div className="flex h-16 items-center justify-center border-b">
         <span
           className={cn(
-            'text-xl font-bold text-blue-600',
-            isOpen ? 'block' : 'hidden'
+            "text-xl font-bold text-blue-600",
+            isOpen ? "block" : "hidden",
           )}
         >
           APITest
         </span>
         <span
           className={cn(
-            'text-xl font-bold text-blue-600',
-            !isOpen ? 'block' : 'hidden'
+            "text-xl font-bold text-blue-600",
+            !isOpen ? "block" : "hidden",
           )}
         >
           AT
@@ -84,21 +86,21 @@ export function Sidebar({ isOpen, setIsOpen, navigation }: SidebarProps) {
                 <button
                   onClick={() => toggleMenu(item.name)}
                   className={cn(
-                    'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-100",
                   )}
                   title={isOpen ? undefined : item.name}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon className={cn('h-5 w-5 flex-shrink-0')} />
-                    <span className={cn(isOpen ? 'block' : 'hidden')}>
+                    <item.icon className={cn("h-5 w-5 shrink-0")} />
+                    <span className={cn(isOpen ? "block" : "hidden")}>
                       {item.name}
                     </span>
                   </div>
                   {isOpen && (
-                    <span className="flex-shrink-0">
+                    <span className="shrink-0">
                       {isExpanded ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (
@@ -118,13 +120,13 @@ export function Sidebar({ isOpen, setIsOpen, navigation }: SidebarProps) {
                           key={child.name}
                           href={child.href}
                           className={cn(
-                            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                             isChildActive
-                              ? 'bg-blue-50 text-blue-700'
-                              : 'text-gray-600 hover:bg-gray-100'
+                              ? "bg-blue-50 text-blue-700"
+                              : "text-gray-600 hover:bg-gray-100",
                           )}
                         >
-                          <child.icon className={cn('h-4 w-4 flex-shrink-0')} />
+                          <child.icon className={cn("h-4 w-4 shrink-0")} />
                           <span>{child.name}</span>
                         </Link>
                       );
@@ -142,15 +144,15 @@ export function Sidebar({ isOpen, setIsOpen, navigation }: SidebarProps) {
               key={item.name}
               href={item.href!}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-700 hover:bg-gray-100",
               )}
               title={isOpen ? undefined : item.name}
             >
-              <item.icon className={cn('h-5 w-5 flex-shrink-0')} />
-              <span className={cn(isOpen ? 'block' : 'hidden')}>
+              <item.icon className={cn("h-5 w-5 shrink-0")} />
+              <span className={cn(isOpen ? "block" : "hidden")}>
                 {item.name}
               </span>
             </Link>

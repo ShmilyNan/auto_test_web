@@ -46,12 +46,9 @@ export default function LoginPage() {
     },
   });
 
-  // 监听认证状态变化，登录成功后自动跳转
+  // 已登录用户访问登录页时，直接跳转到首页
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("登录成功，isAuthenticated = true，准备跳转");
-      setIsLoading(false);
-      // 使用 replace 而不是 push，避免历史记录堆积
       router.replace("/");
     }
   }, [isAuthenticated, router]);
@@ -62,20 +59,18 @@ export default function LoginPage() {
 
     try {
       await login(data.username, data.password);
-
-      console.log("登录成功，准备跳转");
-
-      // 登录成功后，由 useEffect 监听 isAuthenticated 变化并自动跳转
-      // 这里只负责登录，不负责跳转
-    } catch (err: any) {
+      router.replace("/");
+    } catch (err: unknown) {
       console.error("登录失败:", err);
-      setError(err.message || "登录失败，请检查用户名和密码");
+      const errorMessage =
+        err instanceof Error ? err.message : "登录失败，请检查用户名和密码";
+      setError(errorMessage);
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-white to-purple-50 p-4">
       <div className="w-full max-w-md">
         {/* Logo 和标题 */}
         <div className="text-center mb-8">

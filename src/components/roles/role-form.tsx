@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { getRole, updateRole, createRole } from '@/lib/api/roles';
-import type { RoleResponse } from '@/types/auth';
-import { getPermissions } from '@/lib/api/permissions';
-import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { getRole, updateRole, createRole } from "@/lib/api/roles";
+import type { RoleResponse } from "@/types/auth";
+import { getPermissions } from "@/lib/api/permissions";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -19,12 +19,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 
 const roleSchema = z.object({
-  name: z.string().min(1, '角色名称不能为空'),
+  name: z.string().min(1, "角色名称不能为空"),
   description: z.string().optional(),
 });
 
@@ -42,22 +42,22 @@ export default function RoleForm({ roleId, onSuccess }: RoleFormProps) {
 
   // 获取角色详情（编辑模式）
   const { data: roleData, isLoading: isLoadingRole } = useQuery({
-    queryKey: ['role', roleId],
+    queryKey: ["role", roleId],
     queryFn: () => getRole(roleId!),
     enabled: !!roleId,
   });
 
   // 获取权限列表
   const { data: permissions } = useQuery({
-    queryKey: ['permissions'],
+    queryKey: ["permissions"],
     queryFn: getPermissions,
   });
 
   const form = useForm<RoleFormData>({
     resolver: zodResolver(roleSchema),
     defaultValues: {
-      name: '',
-      description: '',
+      name: "",
+      description: "",
     },
   });
 
@@ -67,27 +67,37 @@ export default function RoleForm({ roleId, onSuccess }: RoleFormProps) {
       setSelectedPermissions(roleData.permissions.map((p) => p.id));
       form.reset({
         name: roleData.name,
-        description: roleData.description || '',
+        description: roleData.description || "",
+      });
+      return;
+    }
+
+    // 从编辑切回创建时，避免沿用上一次编辑的数据
+    if (!roleId) {
+      setSelectedPermissions([]);
+      form.reset({
+        name: "",
+        description: "",
       });
     }
-  }, [roleData, form]);
+  }, [roleData, roleId, form]);
 
   // 创建角色
   const createMutation = useMutation({
     mutationFn: createRole,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
       toast({
-        title: '成功',
-        description: '角色已创建',
+        title: "成功",
+        description: "角色已创建",
       });
       onSuccess();
     },
     onError: (error: any) => {
       toast({
-        variant: 'destructive',
-        title: '创建失败',
-        description: error.response?.data?.detail || '创建角色失败',
+        variant: "destructive",
+        title: "创建失败",
+        description: error.response?.data?.detail || "创建角色失败",
       });
     },
   });
@@ -97,18 +107,18 @@ export default function RoleForm({ roleId, onSuccess }: RoleFormProps) {
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       updateRole(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
       toast({
-        title: '成功',
-        description: '角色已更新',
+        title: "成功",
+        description: "角色已更新",
       });
       onSuccess();
     },
     onError: (error: any) => {
       toast({
-        variant: 'destructive',
-        title: '更新失败',
-        description: error.response?.data?.detail || '更新角色失败',
+        variant: "destructive",
+        title: "更新失败",
+        description: error.response?.data?.detail || "更新角色失败",
       });
     },
   });
@@ -116,7 +126,8 @@ export default function RoleForm({ roleId, onSuccess }: RoleFormProps) {
   const onSubmit = (data: RoleFormData) => {
     const submitData = {
       ...data,
-      permission_ids: selectedPermissions.length > 0 ? selectedPermissions : undefined,
+      permission_ids:
+        selectedPermissions.length > 0 ? selectedPermissions : undefined,
     };
 
     if (roleId) {
@@ -130,18 +141,22 @@ export default function RoleForm({ roleId, onSuccess }: RoleFormProps) {
     setSelectedPermissions((prev) =>
       prev.includes(permissionId)
         ? prev.filter((id) => id !== permissionId)
-        : [...prev, permissionId]
+        : [...prev, permissionId],
     );
   };
 
   // 按资源分组权限
-  const groupedPermissions = permissions?.reduce((acc, perm) => {
-    if (!acc[perm.resource]) {
-      acc[perm.resource] = [];
-    }
-    acc[perm.resource].push(perm);
-    return acc;
-  }, {} as Record<string, typeof permissions>) || {};
+  const groupedPermissions =
+    permissions?.reduce(
+      (acc, perm) => {
+        if (!acc[perm.resource]) {
+          acc[perm.resource] = [];
+        }
+        acc[perm.resource].push(perm);
+        return acc;
+      },
+      {} as Record<string, typeof permissions>,
+    ) || {};
 
   if (isLoadingRole) {
     return <div>加载中...</div>;
@@ -188,11 +203,16 @@ export default function RoleForm({ roleId, onSuccess }: RoleFormProps) {
                 </div>
                 <div className="grid grid-cols-1 gap-2 pl-4">
                   {perms?.map((permission) => (
-                    <div key={permission.id} className="flex items-start space-x-2">
+                    <div
+                      key={permission.id}
+                      className="flex items-start space-x-2"
+                    >
                       <Checkbox
                         id={`perm-${permission.id}`}
                         checked={selectedPermissions.includes(permission.id)}
-                        onCheckedChange={() => handlePermissionToggle(permission.id)}
+                        onCheckedChange={() =>
+                          handlePermissionToggle(permission.id)
+                        }
                       />
                       <label
                         htmlFor={`perm-${permission.id}`}
@@ -214,12 +234,15 @@ export default function RoleForm({ roleId, onSuccess }: RoleFormProps) {
         </div>
 
         <div className="flex justify-end space-x-2">
-          <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+          <Button
+            type="submit"
+            disabled={createMutation.isPending || updateMutation.isPending}
+          >
             {createMutation.isPending || updateMutation.isPending
-              ? '保存中...'
+              ? "保存中..."
               : roleId
-              ? '保存'
-              : '创建'}
+                ? "保存"
+                : "创建"}
           </Button>
         </div>
       </form>

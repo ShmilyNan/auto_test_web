@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/user";
 
 interface AuthGuardProps {
@@ -13,7 +12,6 @@ interface AuthGuardProps {
  * 未登录时自动跳转到登录页
  */
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const router = useRouter();
   const { token, user } = useUserStore();
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
 
@@ -44,17 +42,21 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       !!user,
     );
 
-    // 只有在检查完存储后且没有 token 时才跳转
-    if (hasCheckedStorage && !token && typeof window !== "undefined") {
+    // 只有在检查完存储后且认证信息不完整时才跳转
+    if (
+      hasCheckedStorage &&
+      (!token || !user) &&
+      typeof window !== "undefined"
+    ) {
       // 当前不是登录页才跳转
       const isLoginPage = window.location.pathname.includes("/login");
       if (!isLoginPage) {
-        console.log("AuthGuard: 无 token，跳转到登录页");
+        console.log("AuthGuard: 缺少有效认证信息，跳转到登录页");
         // 使用 window.location.href 强制页面重新加载跳转
         window.location.href = "/login";
       }
     }
-  }, [token, hasCheckedStorage]);
+  }, [token, user, hasCheckedStorage]);
 
   // 未检查存储时返回空（避免闪烁）
   if (!hasCheckedStorage) {
