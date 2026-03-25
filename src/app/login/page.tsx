@@ -41,8 +41,8 @@ export default function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "admin",
-      password: "admin123",
+      username: "",
+      password: "",
     },
   });
 
@@ -159,12 +159,12 @@ export default function LoginPage() {
               </Button>
             </form>
           </CardContent>
-
+          {/* 
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-gray-500">
               <p>测试账号: admin / admin123</p>
             </div>
-          </CardFooter>
+          </CardFooter> */}
         </Card>
 
         {/* 底部信息 */}
